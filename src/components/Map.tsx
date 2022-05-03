@@ -1,5 +1,7 @@
 import "leaflet/dist/leaflet.css"
 import "leaflet"
+import "@geoman-io/leaflet-geoman-free"
+import "@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css"
 import {
   LatLngBoundsExpression,
   LatLngExpression,
@@ -39,6 +41,7 @@ export default function Map({
 }: MapProps) {
   const whenCreated = (map: LeafletMap | null) => {
     if (map) {
+      map.pm.setLang("fr")
       initMap?.(map)
     }
   }
