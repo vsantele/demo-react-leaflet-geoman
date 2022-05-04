@@ -1,7 +1,9 @@
-import { Map as LeafletMap, Polyline } from "leaflet"
+import { Map as LeafletMap, Polyline as LeafletPolyline } from "leaflet"
 import { useEffect, useState } from "react"
-
+import { Polygon } from "geojson"
 import Map from "./components/Map"
+import LetterLayer from "./components/LetterLayer"
+import lettersData, { Letter } from "./letters"
 
 function randomColor() {
   return `#${Math.floor(Math.random() * 16777215).toString(16)}`
@@ -9,11 +11,23 @@ function randomColor() {
 
 function App() {
   const [map, setMap] = useState<LeafletMap | null>(null)
+  const [letters, setLetters] = useState<Letter[]>(lettersData)
 
   const initMap = (inMap: LeafletMap) => {
     if (!map) {
       setMap(inMap)
     }
+  }
+
+  const handleLetterUpdate = (id: string, newShape: Polygon) => {
+    console.log("Update letter", id)
+    const newLetters = letters.map((letter) => {
+      if (letter.id === id) {
+        return { ...letter, shape: newShape }
+      }
+      return letter
+    })
+    setLetters(newLetters)
   }
 
   useEffect(() => {
@@ -36,7 +50,7 @@ function App() {
       map.on("pm:drawstart", ({ shape, workingLayer }) => {
         console.log("drawstart", shape)
         workingLayer.on("pm:vertexadded", ({ workingLayer, latlng }) => {
-          const workingShape = workingLayer as Polyline
+          const workingShape = workingLayer as LeafletPolyline
           workingShape.setStyle({ color: randomColor() })
           console.log("Add Vertex: ", latlng)
         })
@@ -48,8 +62,8 @@ function App() {
 
       map.on("pm:create", ({ shape, layer }) => {
         if (shape === "Line") {
-          const line = layer as Polyline
-          console.dir(line.toGeoJSON())
+          const line = layer as LeafletPolyline
+          console.dir(JSON.stringify(line.toGeoJSON()))
         }
         layer.on("pm:update", () => {
           console.log("update")
@@ -72,7 +86,17 @@ function App() {
 
   return (
     <div style={{ height: "100vh" }}>
-      <Map initMap={initMap} />
+      <Map initMap={initMap}>
+        <>
+          {letters.map((letter) => (
+            <LetterLayer
+              key={letter.id}
+              info={letter}
+              onUpdate={handleLetterUpdate}
+            />
+          ))}
+        </>
+      </Map>
     </div>
   )
 }
